@@ -8,7 +8,10 @@ from typing import List, Callable, Optional, Awaitable
 import uvicorn
 from fastapi import FastAPI, WebSocket, Depends
 from starlette.concurrency import run_in_threadpool
+from starlette.requests import Request
 from starlette.responses import FileResponse, HTMLResponse
+from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
 from starlette.websockets import WebSocketDisconnect
 from utils.priority_entry import PriorityEntry
 
@@ -73,10 +76,9 @@ manager = ConnectionManager()
 connected_users = []
 waiting_rooms = [PriorityQueue(), PriorityQueue(), PriorityQueue()]
 
+templates = Jinja2Templates(directory="htmlpage/templates")
 
-@app.get("/", response_class=HTMLResponse)
-async def get_home_page():
-    return """
+html = """
         <htmlpage>
         <head>
             <title>Winmine Project</title>
@@ -91,6 +93,17 @@ async def get_home_page():
         </body>
     </htmlpage>
     """
+
+app.mount(
+    "/static",
+    StaticFiles(directory="htmlpage/static"),
+    name="static",
+)
+
+
+@app.get("/", response_class=HTMLResponse)
+async def get_home_page(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/download")

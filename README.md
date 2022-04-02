@@ -1,1 +1,1 @@
-# Winmine
+# WinmineServer

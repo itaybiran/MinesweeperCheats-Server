@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from fastapi import Depends, APIRouter, HTTPException
@@ -5,14 +6,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from constants import ADMIN
-from utils.auth import get_current_user, hash_password, generate_token
+from utils.auth import hash_password, generate_token, get_current_user_http, decode_token
 from utils.calculations import *
 from database import SessionLocal
 from crud import user as user_crud
 from schemas import user as user_schemas
 from schemas import response as response_schemas
 from schemas import token as token_schemas
-
+import requests
 
 def get_db():
     db = SessionLocal()
@@ -28,7 +29,7 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[user_schemas.User])
-async def get_all(db: Session = Depends(get_db), user: user_schemas.User = Depends(get_current_user)):
+async def get_all(db: Session = Depends(get_db), user: user_schemas.User = Depends(get_current_user_http)):
     if user.nickname == ADMIN:
         users = user_crud.get_users(db)
         return users
@@ -43,7 +44,7 @@ async def register(user: user_schemas.UserCreate, db: Session = Depends(get_db))
         raise HTTPException(401, "nickname is already taken")
     else:
         user_crud.create_user(db, user)
-        return {"response": "added user successfully"}
+        return {"response": "added user"}
 
 
 @router.post("/token", response_model=token_schemas.Token)
@@ -52,6 +53,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     valid_user = user_crud.get_user_by_nickname(db, form_data.username)
     hashed_password = hash_password(form_data.password)
     if valid_user and valid_user.hashed_password == hashed_password:
-        return {"access_token": generate_token(valid_user), "token_type": "bearer"}
+        return {"access_token": generate_token(valid_user), "token_type": "Bearer"}
     else:
         raise HTTPException(401, "wrong nickname or password")
+
+
+@router.get("/info")
+async def get_user_info(user: user_schemas.User = Depends(get_current_user_http)):
+    return user

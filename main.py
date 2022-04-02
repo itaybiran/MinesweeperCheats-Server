@@ -7,6 +7,7 @@ from typing import List, Callable, Optional, Awaitable
 
 import uvicorn
 from fastapi import FastAPI, WebSocket, Depends
+from starlette import status
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
 from starlette.responses import FileResponse, HTMLResponse
@@ -16,7 +17,7 @@ from starlette.websockets import WebSocketDisconnect
 from utils.priority_entry import PriorityEntry
 
 from schemas import user as user_schemas
-from utils.auth import get_current_user
+from utils.auth import get_current_user_ws
 
 from routers import users, files
 from constants import *
@@ -117,20 +118,24 @@ async def get_bomb():
 
 
 @app.websocket("/ws")
-async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int):
-    await manager.connect(websocket)
-    user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket, "opponent_nickname": None, "waiting_time": 0}
-    connected_users.append(user)
-    waiting_rooms[difficulty].put(PriorityEntry(user["rank"], user))
-    data = ''
-    try:
-        while True:
-            if has_opponent(nickname):
-                await manager.send_personal_message(get_opponent_nickname(nickname), data)
-            data = await websocket.receive_text()
-    except WebSocketDisconnect:
-        await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
-        disconnect_user(nickname)
+async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int, user: user_schemas.User = Depends(get_current_user_ws)):
+    if user:
+        await manager.connect(websocket)
+        user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
+                "opponent_nickname": None, "waiting_time": 0}
+        connected_users.append(user)
+        waiting_rooms[difficulty].put(PriorityEntry(user["rank"], user))
+        data = ''
+        try:
+            while True:
+                if has_opponent(nickname):
+                    await manager.send_personal_message(get_opponent_nickname(nickname), data)
+                data = await websocket.receive_text()
+        except WebSocketDisconnect:
+            await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
+            disconnect_user(nickname)
+    else:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
 
 
 def disconnect_user(nickname):
@@ -154,7 +159,8 @@ def find_user(nickname):
 
 def find_user_in_waiting_room(user_to_find):
     """search for user in 'waiting_rooms' by nickname"""
-    return next((user for user in waiting_rooms[user_to_find["difficulty"]].queue if user.data["nickname"] == user_to_find["nickname"]), None)
+    return next((user for user in waiting_rooms[user_to_find["difficulty"]].queue if
+                 user.data["nickname"] == user_to_find["nickname"]), None)
 
 
 def find_opponent(waiting_room):
@@ -168,7 +174,8 @@ async def match():
     for waiting_room in waiting_rooms:
         if waiting_room.qsize() >= MINIMUM_USERS_IN_WAITING_ROOM:
             (user1, user2) = find_opponent(waiting_room)
-            if abs(user1["rank"] - user2["rank"]) <= MAX_RANK_DIFFERENCE or (user1["waiting_time"] > MAX_WAITING_TIME and user2["waiting_time"] > MAX_WAITING_TIME):
+            if abs(user1["rank"] - user2["rank"]) <= MAX_RANK_DIFFERENCE or (
+                    user1["waiting_time"] > MAX_WAITING_TIME and user2["waiting_time"] > MAX_WAITING_TIME):
                 await connect_two_users(user1, user2)
             else:
                 waiting_room.put(PriorityEntry(user1["rank"], user1))

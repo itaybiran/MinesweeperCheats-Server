@@ -58,6 +58,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
         raise HTTPException(401, "wrong nickname or password")
 
 
-@router.get("/info")
-async def get_user_info(user: user_schemas.User = Depends(get_current_user_http)):
-    return user
+@router.post("/save")
+async def save_in_db(user_info: user_schemas.User, db: Session = Depends(get_db), user: user_schemas.User = Depends(get_current_user_http)):
+    user.rank = user_info.rank
+    user.xp = user_info.xp
+    user_crud.update_user_info(db, user)
+    return {"response": "saved data successfully"}
+
+
+@router.get("/info", response_model=user_schemas.User)
+async def get_user_info(db: Session = Depends(get_db), user: user_schemas.User = Depends(get_current_user_http)):
+    return user_crud.get_user_by_nickname(db, user.nickname)

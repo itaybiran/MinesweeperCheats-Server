@@ -131,7 +131,7 @@ async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int, us
                 if has_opponent(nickname):
                     await manager.send_personal_message(get_opponent_nickname(nickname), data)
                 data = await websocket.receive_text()
-        except WebSocketDisconnect:
+        except:
             await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
             disconnect_user(nickname)
     else:

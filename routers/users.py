@@ -69,4 +69,7 @@ async def save_in_db(user_info: user_schemas.User, db: Session = Depends(get_db)
 
 @router.get("/info", response_model=user_schemas.User)
 async def get_user_info(db: Session = Depends(get_db), user: user_schemas.User = Depends(get_current_user_http)):
-    return user_crud.get_user_by_nickname(db, user.nickname)
+    if user:
+        return user_crud.get_user_by_nickname(db, user.nickname)
+    else:
+        raise HTTPException(401, "you are not authorized")

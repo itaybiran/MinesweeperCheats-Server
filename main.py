@@ -122,6 +122,7 @@ async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int, us
     if user:
         for some_user in connected_users:
             if some_user["nickname"] == user.nickname:
+                await websocket.close()
                 return None
         await manager.connect(websocket)
         user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
@@ -137,8 +138,6 @@ async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int, us
         except:
             await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
             disconnect_user(nickname)
-    else:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
 
 
 @app.post("/disconnect")
@@ -197,8 +196,8 @@ async def connect_two_users(user1, user2):
     """connecting between two users in a waiting room"""
     user1["opponent_nickname"] = user2["nickname"]
     user2["opponent_nickname"] = user1["nickname"]
-    await user1["ws"].send_text(user2["nickname"] + " is connected")
-    await user2["ws"].send_text(user1["nickname"] + " is connected")
+    await user1["ws"].send_text(user2["nickname"])
+    await user2["ws"].send_text(user1["nickname"])
 
 
 def get_opponent_nickname(nickname):

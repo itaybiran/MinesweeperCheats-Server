@@ -17,7 +17,7 @@ from starlette.websockets import WebSocketDisconnect
 from utils.priority_entry import PriorityEntry
 
 from schemas import user as user_schemas
-from utils.auth import get_current_user_ws
+from utils.auth import get_current_user_ws, get_current_user_http
 
 from routers import users, files
 from constants import *
@@ -120,6 +120,9 @@ async def get_bomb():
 @app.websocket("/ws")
 async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int, user: user_schemas.User = Depends(get_current_user_ws)):
     if user:
+        for some_user in connected_users:
+            if some_user["nickname"] == user.nickname:
+                return None
         await manager.connect(websocket)
         user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
                 "opponent_nickname": None, "waiting_time": 0}
@@ -136,6 +139,11 @@ async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int, us
             disconnect_user(nickname)
     else:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+
+
+@app.post("/disconnect")
+async def get_user_info(user: user_schemas.User = Depends(get_current_user_http)):
+    disconnect_user(user)
 
 
 def disconnect_user(nickname):

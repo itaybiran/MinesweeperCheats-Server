@@ -1,15 +1,14 @@
-from datetime import datetime, timedelta
 import hashlib
+from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
 from fastapi import Depends, HTTPException, Request, WebSocket
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
-from starlette import status
 
 from constants import TOKEN_TTL, KEY, ALGORITHM
-from schemas import user as user_schemas
 from models import user as user_models
+from schemas import user as user_schemas
 
 
 class CustomOAuth2PasswordBearer(OAuth2PasswordBearer):
@@ -23,7 +22,7 @@ class CustomOAuth2PasswordBearer(OAuth2PasswordBearer):
         authorization: str = websocket.headers.get("Authorization")
         scheme, param = self.get_authorization_scheme_param(authorization)
         if not authorization or scheme.lower() != "bearer":
-             return None
+            return None
         return param
 
     def get_authorization_scheme_param(self, authorization_header_value: str) -> Tuple[str, str]:

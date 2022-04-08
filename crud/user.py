@@ -1,13 +1,12 @@
-import hashlib
+
 from typing import List
 
 from sqlalchemy.orm import Session
 
 from utils.auth import hash_password
-from utils.calculations import *
+
 from models import user as user_models
 from schemas import user as user_schemas
-from utils.calculations import calculate_rank
 
 
 def get_user(db: Session, user_id: int) -> user_models.User:

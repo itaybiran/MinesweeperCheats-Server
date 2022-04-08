@@ -7,20 +7,17 @@ from typing import List, Callable, Optional, Awaitable
 
 import uvicorn
 from fastapi import FastAPI, WebSocket, Depends
-from starlette import status
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
 from starlette.responses import FileResponse, HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
-from starlette.websockets import WebSocketDisconnect
-from utils.priority_entry import PriorityEntry
 
-from schemas import user as user_schemas
-from utils.auth import get_current_user_ws, get_current_user_http
-
-from routers import users, files
 from constants import *
+from routers import users
+from schemas import user as user_schemas
+from utils.auth import get_current_user_http
+from utils.priority_entry import PriorityEntry
 
 
 def repeat_every(*, seconds: float, wait_first: bool = False):
@@ -72,28 +69,11 @@ class ConnectionManager:
 
 app = FastAPI()
 app.include_router(users.router)
-app.include_router(files.router)
 manager = ConnectionManager()
 connected_users = []
 waiting_rooms = [PriorityQueue(), PriorityQueue(), PriorityQueue()]
 
 templates = Jinja2Templates(directory="htmlpage/templates")
-
-html = """
-        <htmlpage>
-        <head>
-            <title>Winmine Project</title>
-            <link rel="icon" href="http://localhost:8000/favicon.ico" type="image/x-icon">
-        </head>
-        <body>
-                <div style="position: relative; top:75px;">
-                    <iframe style="position: relative; left: 75px;" title="winmine demo" src="http://localhost:8000/files/winmine" height="275px" width="180px"></iframe>
-                    <br>
-                    <a style="position: relative; left: 115px;" href="http://localhost:8000/download">download here!</a>
-            </div>
-        </body>
-    </htmlpage>
-    """
 
 app.mount(
     "/static",
@@ -118,26 +98,25 @@ async def get_bomb():
 
 
 @app.websocket("/ws")
-async def connect(websocket: WebSocket, nickname, rank: int, difficulty: int, user: user_schemas.User = Depends(get_current_user_ws)):
-    if user:
-        for some_user in connected_users:
-            if some_user["nickname"] == user.nickname:
-                await websocket.close()
-                return None
-        await manager.connect(websocket)
-        user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
-                "opponent_nickname": None, "waiting_time": 0}
-        connected_users.append(user)
-        waiting_rooms[difficulty].put(PriorityEntry(user["rank"], user))
-        data = ''
-        try:
-            while True:
-                if has_opponent(nickname):
-                    await manager.send_personal_message(get_opponent_nickname(nickname), data)
-                data = await websocket.receive_text()
-        except:
-            await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
-            disconnect_user(nickname)
+async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: int):
+    for some_user in connected_users:
+        if some_user["nickname"] == nickname:
+            await websocket.close()
+            return None
+    await manager.connect(websocket)
+    user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
+            "opponent_nickname": None, "waiting_time": 0}
+    connected_users.append(user)
+    waiting_rooms[difficulty].put(PriorityEntry(user["rank"], user))
+    data = ''
+    try:
+        while True:
+            if has_opponent(nickname):
+                await manager.send_personal_message(get_opponent_nickname(nickname), data)
+            data = await websocket.receive_text()
+    except:
+        await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
+        disconnect_user(nickname)
 
 
 @app.post("/disconnect")

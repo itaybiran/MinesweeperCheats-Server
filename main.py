@@ -92,6 +92,11 @@ async def download_file():
     return FileResponse("htmlpage/files/README.md", media_type='application/octet-stream', filename="download.md")
 
 
+@app.get("/download-winmine")
+async def download_file():
+    return FileResponse("htmlpage/files/Winmine__XP.exe", media_type='application/octet-stream', filename="Winmine__XP.exe")
+
+
 @app.get("/favicon.ico")
 async def get_bomb():
     return FileResponse("htmlpage/icons/bomb.ico")

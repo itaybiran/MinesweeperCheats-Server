@@ -1,4 +1,5 @@
 import asyncio
+import json
 from asyncio import create_task
 from asyncio.log import logger
 from functools import wraps
@@ -16,7 +17,8 @@ from starlette.templating import Jinja2Templates
 from constants import *
 from routers import users
 from schemas import user as user_schemas
-from utils.auth import get_current_user_http
+from schemas.message import Message, MessageTypeEnum
+from utils.auth import get_current_user_http, get_current_user_ws
 from utils.priority_entry import PriorityEntry
 
 
@@ -57,10 +59,10 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
 
-    async def send_personal_message(self, nickname: str, message: str):
+    async def send_personal_message(self, nickname: str, message: Message):
         user_to_send = find_user(nickname)
         if user_to_send is not None:
-            await user_to_send["ws"].send_text(message)
+            await user_to_send["ws"].send_json(message)
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
@@ -116,17 +118,27 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
     data = ''
     try:
         while True:
-            if has_opponent(nickname):
-                await manager.send_personal_message(get_opponent_nickname(nickname), data)
-            data = await websocket.receive_text()
-    except:
+            if has_opponent(user):
+                await handle_data_request(user, data)
+            data = await websocket.receive_json()
+    except Exception as e:
+        print(e)
         await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
         disconnect_user(nickname)
 
 
 @app.post("/disconnect")
-async def get_user_info(user: user_schemas.User = Depends(get_current_user_http)):
-    disconnect_user(user)
+async def get_user_info(user: user_schemas.User = Depends(get_current_user_ws)):
+    disconnect_user(user.nickname)
+
+
+async def handle_data_request(user, message: Message):
+    if message["type"] == MessageTypeEnum.chat_message:
+        await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
+    elif message["type"] == MessageTypeEnum.opponent_data:
+        await manager.send_json({"data": find_user(user["opponent_nickname"]), "type": "opponent_data"})
+    elif message["type"] == MessageTypeEnum.points:
+        await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
 
 
 def disconnect_user(nickname):
@@ -180,8 +192,12 @@ async def connect_two_users(user1, user2):
     """connecting between two users in a waiting room"""
     user1["opponent_nickname"] = user2["nickname"]
     user2["opponent_nickname"] = user1["nickname"]
-    await user1["ws"].send_text(user2["nickname"])
-    await user2["ws"].send_text(user1["nickname"])
+    user1copy: dict = user1.copy()
+    user2copy: dict = user2.copy()
+    user1copy["ws"] = None
+    user2copy["ws"] = None
+    await user1["ws"].send_json(json.dumps({"data": user2copy, "type": "opponent_data"}))
+    await user2["ws"].send_json(json.dumps({"data": user1copy, "type": "opponent_data"}))
 
 
 def get_opponent_nickname(nickname):
@@ -189,9 +205,9 @@ def get_opponent_nickname(nickname):
     return find_user(nickname)["opponent_nickname"]
 
 
-def has_opponent(nickname):
+def has_opponent(user):
     """checks if user have an opponent"""
-    opponent_nickname = get_opponent_nickname(nickname)
+    opponent_nickname = user["opponent_nickname"]
     return opponent_nickname is not None and find_user(opponent_nickname) is not None
 
 

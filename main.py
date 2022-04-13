@@ -127,9 +127,16 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
         disconnect_user(nickname)
 
 
-@app.post("/disconnect")
+@app.post("/disconnect-ws")
 async def get_user_info(user: user_schemas.User = Depends(get_current_user_ws)):
     disconnect_user(user.nickname)
+
+
+@app.post("/disconnect-http")
+async def get_user_info(user: user_schemas.User = Depends(get_current_user_http)):
+    for logged_in_user in users.logged_in_users:
+        if user.nickname == logged_in_user.nickname:
+            users.logged_in_users.remove(logged_in_user)
 
 
 async def handle_data_request(user, message: Message):

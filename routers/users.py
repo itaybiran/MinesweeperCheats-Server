@@ -7,13 +7,11 @@ from sqlalchemy.orm import Session
 
 from constants import ADMIN
 from utils.auth import hash_password, generate_token, get_current_user_http, decode_token
-from utils.calculations import *
 from database import SessionLocal
 from crud import user as user_crud
 from schemas import user as user_schemas
 from schemas import response as response_schemas
 from schemas import token as token_schemas
-import requests
 
 
 def get_db():
@@ -27,6 +25,8 @@ def get_db():
 router = APIRouter(
     prefix="/users"
 )
+
+logged_in_users = []
 
 
 @router.get("/", response_model=List[user_schemas.User])
@@ -54,6 +54,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     valid_user = user_crud.get_user_by_nickname(db, form_data.username)
     hashed_password = hash_password(form_data.password)
     if valid_user and valid_user.hashed_password == hashed_password:
+        for logged_in_user in logged_in_users:
+            if logged_in_user.nickname == valid_user.nickname:
+                raise HTTPException(401, "user is already connected")
+        logged_in_users.append(valid_user)
         return {"access_token": generate_token(valid_user), "token_type": "Bearer"}
     else:
         raise HTTPException(401, "wrong nickname or password")

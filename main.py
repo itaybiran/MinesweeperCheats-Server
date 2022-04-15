@@ -19,6 +19,7 @@ from routers import users
 from schemas import user as user_schemas
 from schemas.message import Message, MessageTypeEnum
 from utils.auth import get_current_user_http, get_current_user_ws
+from utils.board_manager import generate_random_board
 from utils.priority_entry import PriorityEntry
 
 
@@ -112,7 +113,7 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
             return None
     await manager.connect(websocket)
     user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
-            "opponent_nickname": None, "waiting_time": 0}
+            "opponent_nickname": None, "waiting_time": 0, "init_board": [[]]}
     connected_users.append(user)
     waiting_rooms[difficulty].put(PriorityEntry(user["rank"], user))
     data = ''
@@ -123,7 +124,7 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
             data = await websocket.receive_json()
     except Exception as e:
         print(e)
-        await manager.send_personal_message(get_opponent_nickname(nickname), nickname + " was disconnected")
+        await manager.send_personal_message(get_opponent_nickname(nickname), json.dumps({"data": nickname + " was disconnected", "type": "chat_message"}))
         disconnect_user(nickname)
 
 
@@ -146,6 +147,8 @@ async def handle_data_request(user, message: Message):
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
     elif message["type"] == MessageTypeEnum.opponent_data:
         await manager.send_json({"data": find_user(user["opponent_nickname"]), "type": "opponent_data"})
+    elif message["type"] == MessageTypeEnum.init_board:
+        await manager.send_json({"data": user["init_board"], "type": "init_data"})
     elif message["type"] == MessageTypeEnum.points:
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
     elif message["type"] == MessageTypeEnum.board:
@@ -201,14 +204,19 @@ async def match():
 
 async def connect_two_users(user1, user2):
     """connecting between two users in a waiting room"""
+    generated_board = generate_random_board(user1["difficulty"])
     user1["opponent_nickname"] = user2["nickname"]
     user2["opponent_nickname"] = user1["nickname"]
+    user1["init_board"] = generated_board
+    user2["init_board"] = generated_board
     user1copy: dict = user1.copy()
     user2copy: dict = user2.copy()
     user1copy["ws"] = None
     user2copy["ws"] = None
     await user1["ws"].send_json(json.dumps({"data": user2copy, "type": "opponent_data"}))
     await user2["ws"].send_json(json.dumps({"data": user1copy, "type": "opponent_data"}))
+    await user1["ws"].send_json(json.dumps({"data": generated_board, "type": "init_board"}))
+    await user2["ws"].send_json(json.dumps({"data": generated_board, "type": "init_board"}))
 
 
 def get_opponent_nickname(nickname):

@@ -129,14 +129,16 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
 
 @app.post("/disconnect-ws")
 async def get_user_info(user: user_schemas.User = Depends(get_current_user_ws)):
-    disconnect_user(user.nickname)
+    if user is not None:
+        disconnect_user(user.nickname)
 
 
 @app.post("/disconnect-http")
 async def get_user_info(user: user_schemas.User = Depends(get_current_user_http)):
-    for logged_in_user in users.logged_in_users:
-        if user.nickname == logged_in_user.nickname:
-            users.logged_in_users.remove(logged_in_user)
+    if user is not None:
+        for logged_in_user in users.logged_in_users:
+            if user.nickname == logged_in_user["user"].nickname:
+                users.logged_in_users.remove(logged_in_user)
 
 
 async def handle_data_request(user, message: Message):
@@ -145,6 +147,8 @@ async def handle_data_request(user, message: Message):
     elif message["type"] == MessageTypeEnum.opponent_data:
         await manager.send_json({"data": find_user(user["opponent_nickname"]), "type": "opponent_data"})
     elif message["type"] == MessageTypeEnum.points:
+        await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
+    elif message["type"] == MessageTypeEnum.board:
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
 
 

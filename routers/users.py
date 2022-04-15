@@ -55,9 +55,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     hashed_password = hash_password(form_data.password)
     if valid_user and valid_user.hashed_password == hashed_password:
         for logged_in_user in logged_in_users:
-            if logged_in_user.nickname == valid_user.nickname:
-                raise HTTPException(401, "user is already connected")
-        logged_in_users.append(valid_user)
+            if logged_in_user["user"].nickname == valid_user.nickname:
+                if decode_token(logged_in_user["token"]["access_token"]) is not None:
+                    raise HTTPException(401, "user is already connected")
+                else:
+                    logged_in_users.remove(logged_in_user)
+        logged_in_users.append({"user": valid_user, "token": {"access_token": generate_token(valid_user), "token_type": "Bearer"}})
         return {"access_token": generate_token(valid_user), "token_type": "Bearer"}
     else:
         raise HTTPException(401, "wrong nickname or password")

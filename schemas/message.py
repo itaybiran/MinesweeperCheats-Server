@@ -7,6 +7,7 @@ class MessageTypeEnum(str, Enum):
     chat_message = 'chat_message'
     opponent_data = 'opponent_data'
     points = 'points'
+    board = 'board'
     time = 'time'
 
 

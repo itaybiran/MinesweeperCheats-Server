@@ -80,3 +80,11 @@ async def get_user_info(db: Session = Depends(get_db), user: user_schemas.User =
         return user_crud.get_user_by_nickname(db, user.nickname)
     else:
         raise HTTPException(401, "you are not authorized")
+
+
+@router.get("/is_alive")
+async def is_alive(user: user_schemas.User = Depends(get_current_user_http)):
+    if user is not None:
+        return {"response": "user is alive"}
+    else:
+        HTTPException(401, "you are not authorized")

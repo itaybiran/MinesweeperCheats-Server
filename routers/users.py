@@ -54,14 +54,15 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     valid_user = user_crud.get_user_by_nickname(db, form_data.username)
     hashed_password = hash_password(form_data.password)
     if valid_user and valid_user.hashed_password == hashed_password:
+        token = generate_token(valid_user)
         for logged_in_user in logged_in_users:
             if logged_in_user["user"].nickname == valid_user.nickname:
                 if decode_token(logged_in_user["token"]["access_token"]) is not None:
                     raise HTTPException(400, "user is already connected")
                 else:
                     logged_in_users.remove(logged_in_user)
-        logged_in_users.append({"user": valid_user, "token": {"access_token": generate_token(valid_user), "token_type": "Bearer"}})
-        return {"access_token": generate_token(valid_user), "token_type": "Bearer"}
+        logged_in_users.append({"user": valid_user, "token": {"access_token": token, "token_type": "Bearer"}})
+        return {"access_token": token, "token_type": "Bearer"}
     else:
         raise HTTPException(401, "wrong nickname or password")
 
@@ -77,7 +78,7 @@ async def save_in_db(user_info: user_schemas.User, db: Session = Depends(get_db)
 @router.get("/info", response_model=user_schemas.User)
 async def get_user_info(db: Session = Depends(get_db), user: user_schemas.User = Depends(get_current_user_http)):
     if user:
-        return user_crud.get_user_by_nickname(db, user.nickname)
+        return user
     else:
         raise HTTPException(401, "you are not authorized")
 

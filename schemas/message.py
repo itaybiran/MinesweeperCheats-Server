@@ -9,6 +9,7 @@ class MessageTypeEnum(str, Enum):
     points = 'points'
     board = 'board'
     init_board = 'init_board'
+    error = 'error'
     time = 'time'
 
 

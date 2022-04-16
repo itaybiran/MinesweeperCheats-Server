@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import json
 from asyncio import create_task
 from asyncio.log import logger
@@ -7,10 +8,10 @@ from queue import PriorityQueue
 from typing import List, Callable, Optional, Awaitable
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, Depends
+from fastapi import FastAPI, WebSocket, Depends, HTTPException
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
-from starlette.responses import FileResponse, HTMLResponse
+from starlette.responses import FileResponse, HTMLResponse, Response
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
@@ -145,10 +146,10 @@ async def get_user_info(user: user_schemas.User = Depends(get_current_user_http)
 async def handle_data_request(user, message: Message):
     if message["type"] == MessageTypeEnum.chat_message:
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
-    elif message["type"] == MessageTypeEnum.opponent_data:
-        await manager.send_json({"data": find_user(user["opponent_nickname"]), "type": "opponent_data"})
-    elif message["type"] == MessageTypeEnum.init_board:
-        await manager.send_json({"data": user["init_board"], "type": "init_data"})
+    # elif message["type"] == MessageTypeEnum.opponent_data:
+    #     await manager.send_json({"data": find_user(user["opponent_nickname"]), "type": "opponent_data"})
+    # elif message["type"] == MessageTypeEnum.init_board:
+    #     await manager.send_json({"data": user["init_board"], "type": "init_data"})
     elif message["type"] == MessageTypeEnum.points:
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
     elif message["type"] == MessageTypeEnum.board:

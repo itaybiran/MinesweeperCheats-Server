@@ -10,6 +10,8 @@ class MessageTypeEnum(str, Enum):
     board = 'board'
     init_board = 'init_board'
     error = 'error'
+    win_or_lose = 'win_or_lose'
+    new_xp = 'new_xp'
     time = 'time'
 
 

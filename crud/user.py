@@ -31,8 +31,8 @@ def create_user(db: Session, user: user_schemas.UserCreate):
 
 
 def update_user_info(db: Session, user: user_schemas.User):
-    user_to_update = get_user_by_nickname(db, user.nickname)
-    user_to_update.rank = user.rank
-    user_to_update.xp = user.xp
+    user_to_update = get_user_by_nickname(db, user["nickname"])
+    user_to_update.rank = user["rank"]
+    user_to_update.xp = user["xp"]
     db.commit()
     return user_to_update

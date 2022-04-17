@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import json
 from asyncio import create_task
 from asyncio.log import logger
@@ -8,15 +7,16 @@ from queue import PriorityQueue
 from typing import List, Callable, Optional, Awaitable
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, Depends, HTTPException
+from fastapi import FastAPI, WebSocket, Depends
 from requests import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
-from starlette.responses import FileResponse, HTMLResponse, Response
+from starlette.responses import FileResponse, HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 from constants import *
+from crud import user as user_crud
 from routers import users
 from routers.users import get_db
 from schemas import user as user_schemas
@@ -25,7 +25,6 @@ from utils import calculations
 from utils.auth import get_current_user_http, get_current_user_ws
 from utils.board_manager import generate_random_board
 from utils.priority_entry import PriorityEntry
-from crud import user as user_crud
 
 
 def repeat_every(*, seconds: float, wait_first: bool = False):
@@ -102,7 +101,8 @@ async def download_file():
 
 @app.get("/download-winmine")
 async def download_file():
-    return FileResponse("htmlpage/files/Winmine__XP.exe", media_type='application/octet-stream', filename="Winmine__XP.exe")
+    return FileResponse("htmlpage/files/Winmine__XP.exe", media_type='application/octet-stream',
+                        filename="Winmine__XP.exe")
 
 
 @app.get("/favicon.ico")
@@ -129,14 +129,15 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
             data = await websocket.receive_json()
     except Exception as e:
         print(e)
-        await manager.send_personal_message(user["opponent_nickname"], json.dumps({"data": nickname + " was disconnected", "type": "chat_message"}))
+        await manager.send_personal_message(user["opponent_nickname"], json.dumps(
+            {"data": nickname + " was disconnected", "type": "chat_message"}))
         disconnect_user(nickname)
 
 
 @app.post("/disconnect-ws")
 async def get_user_info(user: user_schemas.User = Depends(get_current_user_ws)):
     if user is not None:
-       disconnect_user(user.nickname)
+        disconnect_user(user.nickname)
 
 
 @app.post("/disconnect-http")
@@ -163,7 +164,8 @@ async def handle_data_request(user, message: Message, db: Session):
         message["data"] = str(1 - int(message["data"]))
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(message))
     elif message["type"] == MessageTypeEnum.new_xp:
-        await manager.send_personal_message(user["nickname"], json.dumps(update_user_rank_and_xp(user, message["data"], db)))
+        await manager.send_personal_message(user["nickname"],
+                                            json.dumps(update_user_rank_and_xp(user, message["data"], db)))
 
 
 def update_user_rank_and_xp(user, xp, db: Session):

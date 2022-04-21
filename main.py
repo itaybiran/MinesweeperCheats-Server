@@ -171,15 +171,17 @@ async def handle_data_request(user, message: Message, db: Session):
 def update_user_rank_and_xp(user, xp, db: Session):
     new_user_info: user_schemas.User = {}
     new_user_info["nickname"] = user["nickname"]
+    rank = calculations.calculate_rank(int(xp))
     if int(xp) > 0:
         new_user_info["xp"] = int(xp)
-        rank = calculations.calculate_rank(int(xp))
     else:
         new_user_info["xp"] = 0
         rank = 0
     new_user_info["rank"] = rank
+    if new_user_info["rank"] > 14:
+        new_user_info["rank"] = 14
     user_crud.update_user_info(db, new_user_info)
-    return {"data": {"rank": str(rank), "xp": str(new_user_info["xp"])}, "type": "new_xp"}
+    return {"data": {"rank": str(new_user_info["rank"]), "xp": str(new_user_info["xp"])}, "type": "new_xp"}
 
 
 def disconnect_user(nickname):

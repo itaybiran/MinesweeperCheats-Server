@@ -1,10 +1,7 @@
 
 from typing import List
-
 from sqlalchemy.orm import Session
-
 from utils.auth import hash_password
-
 from models import user as user_models
 from schemas import user as user_schemas
 
@@ -23,7 +20,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[user_models.
 
 def create_user(db: Session, user: user_schemas.UserCreate):
     hashed_password = hash_password(user.password)
-    db_user = user_models.User(nickname=user.nickname, hashed_password=hashed_password)
+    db_user: user_models.User = user_models.User(nickname=user.nickname, hashed_password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

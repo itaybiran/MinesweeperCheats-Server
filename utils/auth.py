@@ -71,5 +71,5 @@ def generate_token(user: user_models.User):
     return jwt.encode(token, KEY, algorithm=ALGORITHM)
 
 
-def get_token_dict(user: user_models.User) -> user_schemas.User:
+def get_token_dict(user: user_models.User):
     return {"nickname": user.nickname, "rank": user.rank, "xp": user.xp}

@@ -189,8 +189,9 @@ async def disconnect_user(nickname):
     user = find_user(nickname)
     if user is not None:
         connected_users.remove(user)
-        await manager.disconnect(user["ws"])
-        await user["ws"].close()
+        manager.disconnect(user["ws"])
+        if user["ws"] is not None:
+            await user["ws"].close()
         user_in_waiting_room = find_user_in_waiting_room(user)
         if user_in_waiting_room:
             waiting_rooms[user["difficulty"]].queue.remove(user_in_waiting_room)

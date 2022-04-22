@@ -112,10 +112,6 @@ async def get_bomb():
 
 @app.websocket("/ws")
 async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: int, db: Session = Depends(get_db)):
-    for some_user in connected_users:
-        if some_user["nickname"] == nickname:
-            await websocket.close()
-            return None
     await manager.connect(websocket)
     user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
             "opponent_nickname": None, "waiting_time": 0, "init_board": [[]]}

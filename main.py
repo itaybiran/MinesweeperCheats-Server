@@ -137,7 +137,7 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
 @app.post("/disconnect-ws")
 async def get_user_info(user: user_schemas.User = Depends(get_current_user_ws)):
     if user is not None:
-        disconnect_user(user.nickname)
+        await disconnect_user(user.nickname)
 
 
 @app.post("/disconnect-http")

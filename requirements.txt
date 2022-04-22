@@ -1,5 +1,6 @@
 alembic==1.7.6
 anyio==3.5.0
+APScheduler==3.9.1
 asgiref==3.5.0
 bidict==0.22.0
 certifi==2021.10.8
@@ -27,6 +28,8 @@ python-dotenv==0.19.2
 python-engineio==4.3.1
 python-jose==3.3.0
 python-multipart==0.0.5
+pytz==2022.1
+pytz-deprecation-shim==0.1.0.post0
 PyYAML==6.0
 requests==2.27.1
 rsa==4.8
@@ -35,6 +38,8 @@ sniffio==1.2.0
 SQLAlchemy==1.4.31
 starlette==0.17.1
 typing_extensions==4.1.1
+tzdata==2022.1
+tzlocal==4.2
 urllib3==1.26.9
 uvicorn==0.17.5
 watchgod==0.7

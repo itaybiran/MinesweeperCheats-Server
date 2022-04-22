@@ -131,13 +131,13 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
         print(e)
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(
             {"data": nickname + " was disconnected", "type": "chat_message"}))
-        await disconnect_user(nickname)
+        disconnect_user(nickname)
 
 
 @app.post("/disconnect-ws")
 async def get_user_info(user: user_schemas.User = Depends(get_current_user_ws)):
     if user is not None:
-        await disconnect_user(user.nickname)
+        disconnect_user(user.nickname)
 
 
 @app.post("/disconnect-http")
@@ -184,7 +184,7 @@ def update_user_rank_and_xp(user, xp, db: Session):
     return {"data": {"rank": str(new_user_info["rank"]), "xp": str(new_user_info["xp"])}, "type": "new_xp"}
 
 
-async def disconnect_user(nickname):
+def disconnect_user(nickname):
     """disconnects user"""
     user = find_user(nickname)
     if user is not None:

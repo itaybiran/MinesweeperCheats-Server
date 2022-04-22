@@ -8,7 +8,7 @@ from typing import List, Callable, Optional, Awaitable
 
 import uvicorn
 from fastapi import FastAPI, WebSocket, Depends
-from requests import Session
+from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
 from starlette.responses import FileResponse, HTMLResponse

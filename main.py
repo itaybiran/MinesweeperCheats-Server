@@ -131,7 +131,7 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
         print(e)
         await manager.send_personal_message(user["opponent_nickname"], json.dumps(
             {"data": nickname + " was disconnected", "type": "chat_message"}))
-        disconnect_user(nickname)
+        await disconnect_user(nickname)
 
 
 @app.post("/disconnect-ws")

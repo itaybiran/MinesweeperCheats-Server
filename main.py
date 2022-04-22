@@ -214,11 +214,8 @@ def find_opponent(waiting_room):
     return waiting_room.get().data, waiting_room.get().data
 
 
-from apscheduler.schedulers.blocking import BlockingScheduler
-
-sched = BlockingScheduler()
 @app.on_event("startup")
-@sched.scheduled_job('interval', minutes=0.05)
+@repeat_every(seconds=1, wait_first=True)
 async def match():
     for waiting_room in waiting_rooms:
         if waiting_room.qsize() >= MINIMUM_USERS_IN_WAITING_ROOM:
@@ -263,5 +260,4 @@ def has_opponent(user):
 
 
 if __name__ == "__main__":
-    sched.start()
     uvicorn.run(app, host="0.0.0.0", port=8000)

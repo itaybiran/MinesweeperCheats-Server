@@ -1,1 +1,1 @@
-web: gunicorn main:app --host=0.0.0.0 --port=${PORT=-8000}
+web: uvicorn -w 4 main:app --host=0.0.0.0 --port=${PORT=-8000}

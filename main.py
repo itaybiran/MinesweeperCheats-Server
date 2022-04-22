@@ -214,8 +214,11 @@ def find_opponent(waiting_room):
     return waiting_room.get().data, waiting_room.get().data
 
 
+from apscheduler.schedulers.blocking import BlockingScheduler
+
+sched = BlockingScheduler()
 @app.on_event("startup")
-@repeat_every(seconds=1, wait_first=True)
+@sched.scheduled_job('interval', minutes=0.05)
 async def match():
     for waiting_room in waiting_rooms:
         if waiting_room.qsize() >= MINIMUM_USERS_IN_WAITING_ROOM:

@@ -192,7 +192,6 @@ def disconnect_user(nickname):
         if user["opponent_nickname"] is not None:
             opponent = find_user(user["opponent_nickname"])
             opponent["opponent_nickname"] = None
-            manager.disconnect(opponent["ws"])
             user["opponent_nickname"] = None
 
 

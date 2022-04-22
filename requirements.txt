@@ -1,3 +1,4 @@
+alembic==1.7.6
 anyio==3.5.0
 asgiref==3.5.0
 bidict==0.22.0
@@ -11,6 +12,7 @@ ecdsa==0.17.0
 fastapi==0.74.0
 fastapi-utils==0.2.1
 greenlet==1.1.2
+gunicorn==20.1.0
 h11==0.13.0
 httptools==0.3.0
 idna==3.3

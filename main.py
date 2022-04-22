@@ -14,6 +14,7 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+from starlette.websockets import WebSocketState
 
 from constants import *
 from crud import user as user_crud
@@ -115,6 +116,7 @@ async def connect(websocket: WebSocket, nickname: str, rank: int, difficulty: in
     for some_user in connected_users:
         if some_user["nickname"] == nickname:
             await websocket.close()
+            websocket.client_state
             return None
     await manager.connect(websocket)
     user = {"nickname": nickname, "rank": rank, "difficulty": difficulty, "ws": websocket,
@@ -190,7 +192,7 @@ async def disconnect_user(nickname):
     if user is not None:
         connected_users.remove(user)
         manager.disconnect(user["ws"])
-        if user["ws"] is not None:
+        if user["ws"] is not None and user["ws"].client_state == WebSocketState.CONNECTED:
             await user["ws"].close()
         user_in_waiting_room = find_user_in_waiting_room(user)
         if user_in_waiting_room:

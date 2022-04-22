@@ -190,7 +190,9 @@ def disconnect_user(nickname):
         if user_in_waiting_room:
             waiting_rooms[user["difficulty"]].queue.remove(user_in_waiting_room)
         if user["opponent_nickname"] is not None:
-            find_user(user["opponent_nickname"])["opponent_nickname"] = None
+            opponent = find_user(user["opponent_nickname"])
+            opponent["opponent_nickname"] = None
+            manager.disconnect(opponent["ws"])
             user["opponent_nickname"] = None
 
 

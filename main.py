@@ -184,7 +184,7 @@ def update_user_rank_and_xp(user, xp, db: Session):
     return {"data": {"rank": str(new_user_info["rank"]), "xp": str(new_user_info["xp"])}, "type": "new_xp"}
 
 
-def disconnect_user(nickname):
+async def disconnect_user(nickname):
     """disconnects user"""
     user = find_user(nickname)
     if user is not None:

@@ -96,7 +96,7 @@ async def get_home_page(request: Request):
 
 @app.get("/download")
 async def download_file():
-    return FileResponse("htmlpage/files/README.md", media_type='application/octet-stream', filename="download.md")
+    return FileResponse("htmlpage/files/MineSweeper.exe", media_type='application/octet-stream', filename="MineSweeper.exe")
 
 
 @app.get("/download-winmine")
@@ -215,13 +215,10 @@ def find_opponent(waiting_room):
 @repeat_every(seconds=1, wait_first=True)
 async def match():
     for waiting_room in waiting_rooms:
-        print(waiting_room.qsize())
         if waiting_room.qsize() >= MINIMUM_USERS_IN_WAITING_ROOM:
-            print("match")
             (user1, user2) = find_opponent(waiting_room)
             if abs(user1["rank"] - user2["rank"]) <= MAX_RANK_DIFFERENCE or (
                     user1["waiting_time"] > MAX_WAITING_TIME and user2["waiting_time"] > MAX_WAITING_TIME):
-                print("two users connected")
                 await connect_two_users(user1, user2)
             else:
                 waiting_room.put(PriorityEntry(user1["rank"], user1))

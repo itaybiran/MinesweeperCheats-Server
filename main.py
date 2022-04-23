@@ -214,6 +214,7 @@ def find_opponent(waiting_room):
 @app.on_event("startup")
 @repeat_every(seconds=3, wait_first=True)
 async def match():
+    print("match")
     for waiting_room in waiting_rooms:
         if waiting_room.qsize() >= MINIMUM_USERS_IN_WAITING_ROOM:
             (user1, user2) = find_opponent(waiting_room)

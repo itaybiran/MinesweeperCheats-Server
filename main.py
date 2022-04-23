@@ -212,7 +212,7 @@ def find_opponent(waiting_room):
 
 
 @app.on_event("startup")
-@repeat_every(seconds=3, wait_first=True)
+@repeat_every(seconds=1, wait_first=True)
 async def match():
     for waiting_room in waiting_rooms:
         print(waiting_room.qsize())
